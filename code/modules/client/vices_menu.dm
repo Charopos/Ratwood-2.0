@@ -705,7 +705,7 @@ GLOBAL_LIST_EMPTY(cached_loadout_icons)
 		<style>
 			body {
 				font-family: Verdana, Arial, sans-serif;
-				background: #100000 url('flowers.png') repeat;
+				background: #100000 url('background.png') repeat;
 				color: [theme["text"]];
 				margin: 0;
 				padding: 0;
