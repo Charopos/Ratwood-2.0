@@ -39,6 +39,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 										//autocorrected this round, not that you'd need to check that.
 
 	var/UI_style = null
+	var/hud_colorblind_palette = HUD_COLORBLIND_NONE
 	var/buttons_locked = TRUE
 	var/hotkeys = TRUE
 
@@ -49,6 +50,8 @@ GLOBAL_LIST_EMPTY(chosen_names)
 
 	// Custom Keybindings
 	var/list/key_bindings = list()
+	/// Whether closing keybind setup should return to character preferences.
+	var/keybinds_return_to_prefs = TRUE
 
 	var/tgui_fancy = TRUE
 	var/tgui_lock = TRUE
@@ -84,7 +87,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	var/datum/virtue/virtuetwo = new /datum/virtue/none
 	var/selected_title = "None"
 	var/age = AGE_ADULT						//age of character
-	var/origin = "Default"
+	var/datum/origin/origin
 	var/accessory = "Nothing"
 	var/detail = "Nothing"
 	var/backpack = DBACKPACK				//backpack type
@@ -196,6 +199,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	var/widescreenpref = TRUE
 
 	var/musicvol = 50
+	var/combatmusicvol = 50
 	var/lobbymusicvol = 50
 	var/ambiencevol = 50
 	var/mastervol = 50
@@ -210,6 +214,8 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	var/no_autopunctuate = FALSE
 	var/no_language_fonts = FALSE
 	var/no_language_icon = FALSE
+	var/hide_unavailable_emotes = FALSE
+	var/hide_tongue_noise_warnings = FALSE
 	var/ghost_protection = FALSE
 	var/lastclass
 
@@ -348,6 +354,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	var/list/nsfw_img_gallery = list()
 
 	var/datum/familiar_prefs/familiar_prefs
+	var/datum/gnoll_prefs/gnoll_prefs
 
 	var/taur_type = null
 	var/taur_color = "ffffff"
@@ -367,6 +374,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	parent = C
 	migrant  = new /datum/migrant_pref(src)
 	familiar_prefs = new /datum/familiar_prefs(src)
+	gnoll_prefs = new /datum/gnoll_prefs(src)
 
 	for(var/custom_name_id in GLOB.preferences_custom_names)
 		custom_names[custom_name_id] = get_default_name(custom_name_id)
@@ -401,6 +409,18 @@ GLOBAL_LIST_EMPTY(chosen_names)
 	save_character()		//let's save this new random character so it doesn't keep generating new ones.
 	menuoptions = list()
 	return
+
+/datum/preferences/proc/get_roguehud_icon()
+	return roguehud_icon_for_palette(hud_colorblind_palette)
+
+/datum/preferences/proc/get_rogueheat_icon()
+	return rogueheat_icon_for_palette(hud_colorblind_palette)
+
+/datum/preferences/proc/set_hud_colorblind_palette(new_palette)
+	if(!is_hud_colorblind_palette(new_palette))
+		return FALSE
+	hud_colorblind_palette = new_palette
+	return TRUE
 
 /datum/preferences/proc/set_new_race(datum/species/new_race, user)
 	pref_species = new_race
@@ -596,6 +616,7 @@ GLOBAL_LIST_EMPTY(chosen_names)
 				dat += "<b>Taur Tertiary:</b> <span style='border: 1px solid #161616; background-color: #[taur_tertiary];'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <a href='?_src_=prefs;preference=taur_tertiary;task=input'>Change</a><BR>"
 
 			dat += "<b>Age:</b> <a href='?_src_=prefs;preference=age;task=input'>[age]</a><BR>"
+			dat += "<b>Origin:</b> <a href='?_src_=prefs;preference=origin;task=input'>[origin ? origin.name : "None"]</a><BR>"
 
 //			dat += "<br><b>Age:</b> <a href='?_src_=prefs;preference=age;task=input'>[age]</a>"
 //			if(randomise[RANDOM_BODY] || randomise[RANDOM_BODY_ANTAG]) //doesn't work unless random body
@@ -623,6 +644,8 @@ GLOBAL_LIST_EMPTY(chosen_names)
 			dat += "<b>Unrevivable:</b> <a href='?_src_=prefs;preference=dnr;task=input'>[dnr_pref ? "Yes" : "No"]</a><BR>"
 
 			dat += "<b>Be a Familiar:</b><a href='?_src_=prefs;preference=familiar_prefs;task=input'>Familiar Preferences</a>"
+
+			dat += "<br><b>Gnoll Customization:</b><a href='?_src_=prefs;preference=gnoll_prefs;task=input'>Gnoll Preferences</a>"
 
 /*
 			dat += "<br><br><b>Special Names:</b><BR>"
@@ -1021,8 +1044,17 @@ GLOBAL_LIST_EMPTY(chosen_names)
 		var ctrl = e.ctrlKey ? 1 : 0;
 		var shift = e.shiftKey ? 1 : 0;
 		var numpad = (95 < e.keyCode && e.keyCode < 112) ? 1 : 0;
+		var main_key = e.key;
+		switch (main_key){
+			case '#':main_key = '%23';
+			break;
+			case '&':main_key = '%26';
+			break;
+			case '=':main_key = '%3D';
+			break;
+		};
 		var escPressed = e.keyCode == 27 ? 1 : 0;
-		var url = 'byond://?_src_=prefs;preference=keybinds;task=keybindings_set;keybinding=[kb.name];old_key=[old_key];clear_key='+escPressed+';key='+e.key+';alt='+alt+';ctrl='+ctrl+';shift='+shift+';numpad='+numpad+';key_code='+e.keyCode;
+		var url = 'byond://?_src_=prefs;preference=keybinds;task=keybindings_set;keybinding=[kb.name];old_key=[old_key];clear_key='+escPressed+';key='+main_key+';alt='+alt+';ctrl='+ctrl+';shift='+shift+';numpad='+numpad+';key_code='+e.keyCode;
 		window.location=url;
 		deedDone = true;
 	}
@@ -1360,7 +1392,10 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 			user.client.prefs.lastclass = null
 			user.client.prefs.save_preferences()
 
-/datum/preferences/proc/SetKeybinds(mob/user)
+/datum/preferences/proc/SetKeybinds(mob/user, return_to_prefs = null)
+	if(!isnull(return_to_prefs))
+		keybinds_return_to_prefs = !!return_to_prefs
+	var/return_flag = keybinds_return_to_prefs ? 1 : 0
 	var/list/dat = list()
 	// Create an inverted list of keybindings -> key
 	var/list/user_binds = list()
@@ -1376,7 +1411,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 
 	dat += "<style>label { display: inline-block; width: 200px; }</style><body>"
 
-	dat += "<center><a href='?_src_=prefs;preference=keybinds;task=close'>Done</a></center><br>"
+	dat += "<center><a href='?_src_=prefs;preference=keybinds;task=close;return_to_prefs=[return_flag]'>Done</a></center><br>"
 	for (var/category in kb_categories)
 		for (var/i in kb_categories[category])
 			var/datum/keybinding/kb = i
@@ -1446,6 +1481,15 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 		var/client/C = usr.client
 		if(C)
 			C.clear_character_previews()
+	if(href_list["preference"] == "origin_select")
+		var/mob/user = usr
+		var/chosen_type = text2path(href_list["type"])
+		if(chosen_type && (chosen_type in GLOB.origins))
+			origin = GLOB.origins[chosen_type]
+			save_character()
+			user << browse(null, "window=origin_map")
+			ShowChoices(user)
+			return
 
 /datum/preferences/proc/process_link(mob/user, list/href_list)
 	if(href_list["bancheck"])
@@ -1550,6 +1594,15 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 	else if(href_list["preference"] == "customizers")
 		ShowCustomizers(user)
 		return
+	else if(href_list["preference"] == "origin_select")
+		var/chosen_type = text2path(href_list["type"])
+		if(chosen_type && (chosen_type in GLOB.origins))
+			origin = GLOB.origins[chosen_type]
+			save_character()
+			user << browse(null, "window=origin_map")
+			ShowChoices(user)
+			return
+		return
 	else if(href_list["preference"] == "triumph_buy_menu")
 		SStriumphs.startup_triumphs_menu(user.client)
 
@@ -1557,7 +1610,10 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 		switch(href_list["task"])
 			if("close")
 				user << browse(null, "window=keybind_setup")
-				ShowChoices(user)
+				if(text2num(href_list["return_to_prefs"]) || keybinds_return_to_prefs)
+					ShowChoices(user)
+			if("menu")
+				SetKeybinds(user, TRUE)
 			if("update")
 				SetKeybinds(user)
 			if("keybindings_capture")
@@ -1620,7 +1676,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 			if("keybindings_reset")
 				var/choice = tgalert(user, "Do you really want to reset your keybindings?", "Setup keybindings", "Do It", "Cancel")
 				if(choice == "Cancel")
-					ShowChoices(user,3)
+					SetKeybinds(user)
 					return
 				hotkeys = (choice == "Do It")
 				key_bindings = (hotkeys) ? deepCopyList(GLOB.hotkey_keybinding_list_by_key) : deepCopyList(GLOB.classic_keybinding_list_by_key)
@@ -1828,6 +1884,10 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					var/obj/item/bodypart/taur/tt = taur_type
 					to_chat(user, span_red("Your character now has [tt ? tt::name : "no taurtype."]."))
 
+				if("origin")
+					open_origin_map(user)
+					return
+
 				if("faith")
 					var/list/faiths_named = list()
 					for(var/path as anything in GLOB.preference_faiths)
@@ -1840,7 +1900,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						var/datum/faith/faith = faiths_named[faith_input]
 						to_chat(user, "<font color='yellow'>Faith: [faith.name]</font>")
 						to_chat(user, "Background: [faith.desc]")
-						to_chat(user, "<font color='red'>Likely Worshippers: [faith.worshippers]</font>")
+						to_chat(user, "<font color='purple'>Likely Worshippers: [faith.worshippers]</font>")
 						selected_patron = GLOB.patronlist[faith.godhead] || GLOB.patronlist[pick(GLOB.patrons_by_faith[faith_input])]
 
 				if("patron")
@@ -1858,7 +1918,9 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						to_chat(user, "<font color='yellow'>Patron: [selected_patron]</font>")
 						to_chat(user, "<font color='#FFA500'>Domain: [selected_patron.domain]</font>")
 						to_chat(user, "Background: [selected_patron.desc]")
-						to_chat(user, "<font color='red'>Likely Worshippers: [selected_patron.worshippers]</font>")
+						to_chat(user, "<font color='purple'>Likely Worshippers: [selected_patron.worshippers]</font>")
+						to_chat(user, "<font color='white'>Considers these to be VIRTUES: [selected_patron.virtues]</font>")
+						to_chat(user, "<font color='red'>Considers these to be SINS: [selected_patron.sins]</font>")
 
 				if("combat_music") // if u change shit here look at /client/verb/combat_music() too
 					if(!combat_music_helptext_shown)
@@ -1867,10 +1929,17 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						which is influenced by your job class, villain status, or certain events.\n\
 						You can change this later through \"Combat Mode Music\" in the Options tab.\"</span>")
 						combat_music_helptext_shown = TRUE
-					var/track_select = tgui_input_list(user, "To you, the Signal sounds like:", "COMBAT MUSIC", GLOB.cmode_tracks_by_name, combat_music?.name)
-					if(track_select)
-						combat_music = GLOB.cmode_tracks_by_name[track_select]
-						to_chat(user, span_notice("Selected track: <b>[track_select]</b>."))
+					var/client/C = user?.client
+					if(!C)
+						return
+					var/datum/combat_music/selected_track = C.pick_combat_music_with_listen(
+						"To you, the Signal sounds like:",
+						"COMBAT MUSIC",
+						combat_music?.name,
+					)
+					if(selected_track)
+						combat_music = selected_track
+						to_chat(user, span_notice("Selected track: <b>[selected_track.name]</b>."))
 						if(combat_music.desc)
 							to_chat(user, "<i>[combat_music.desc]</i>")
 						if(combat_music.credits)
@@ -2315,9 +2384,10 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						return
 					if(link == "")
 						link = null
-						ShowChoices(user)
-						return
-					if(link == " ")
+						var/choice = tgui_alert(user, "Do you really want to clear your OOC Extra Image/Video/Gif?", "Clear OOC Extra Image/Video/Gif", list("Yae", "Nae"))
+						if(choice == "Nae")
+							ShowChoices(user)
+							return
 						ooc_extra_img = null
 						ooc_extra_img_link = null
 						to_chat(user, "<span class='notice'>Successfully deleted OOC Extra Image.</span>")
@@ -2351,9 +2421,10 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 						return
 					if(link == "")
 						link = null
-						ShowChoices(user)
-						return
-					if(link == " ")
+						var/choice = tgui_alert(user, "Do you really want to clear your NSFW OOC Extra Image/Video/Gif?", "Clear NSFW OOC Extra Image/Video/Gif", list("Yae", "Nae"))
+						if(choice == "Nae")
+							ShowChoices(user)
+							return
 						nsfw_ooc_extra_img = null
 						nsfw_ooc_extra_img_link = null
 						to_chat(user, "<span class='notice'>Successfully deleted NSFW OOC Extra Image.</span>")
@@ -2379,6 +2450,9 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 
 				if("familiar_prefs")
 					familiar_prefs.fam_show_ui()
+
+				if("gnoll_prefs")
+					gnoll_prefs.gnoll_show_ui(user)
 
 				if("species")
 					var/list/species = list()
@@ -2511,6 +2585,21 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					var/selectedaccent = tgui_input_list(user, "Choose your character's accent:", "Character Preference", GLOB.character_accents)
 					if(selectedaccent)
 						char_accent = selectedaccent
+						var/test_message = "Hello friend, yes this is good. My Lord rides through the Duchy with servants and soldiers; the captain and sergeant guard the church while archers and cavalry hold the north road. My sword and shield are sharp, the water flows refreshingly, and we thank the Duke before saying goodbye."
+						var/preview = apply_accent_preview(selectedaccent, test_message)
+						var/preview_text
+						if(preview)
+							preview_text = "[preview]"
+						else
+							preview_text = "[test_message] (this accent uses no text replacements)"
+
+						var/list/accent_preview_spans = GLOB.accent_spans?[selectedaccent]
+						if(accent_preview_spans?.len)
+							var/accent_preview_span = accent_preview_spans[1]
+							if(accent_preview_span)
+								preview_text = "<span class='[accent_preview_span]'>[preview_text]</span>"
+
+						to_chat(user, span_info("<b>[selectedaccent] Preview:</b> [preview_text]"))
 
 				if("ooccolor")
 					var/new_ooccolor = color_pick_sanitized(user, "Choose your OOC colour:", "Game Preference",ooccolor)
@@ -2576,7 +2665,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					if(pickedui)
 						UI_style = "Rogue"
 						if (parent && parent.mob && parent.mob.hud_used)
-							parent.mob.hud_used.update_ui_style(ui_style2icon(UI_style))
+							parent.mob.hud_used.update_ui_style(ui_style2icon(UI_style, src))
 				if("pda_style")
 					var/pickedPDAStyle = input(user, "Choose your PDA style.", "Character Preference", pda_style)  as null|anything in GLOB.pda_styles
 					if(pickedPDAStyle)
@@ -2801,7 +2890,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					else
 						user.stop_sound_channel(CHANNEL_LOBBYMUSIC)
 
-				if("ghost_ears")
+/* 				if("ghost_ears")
 					chat_toggles ^= CHAT_GHOSTEARS
 
 				if("ghost_sight")
@@ -2814,7 +2903,7 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 					chat_toggles ^= CHAT_GHOSTRADIO
 
 				if("ghost_pda")
-					chat_toggles ^= CHAT_GHOSTPDA
+					chat_toggles ^= CHAT_GHOSTPDA */
 
 				if("income_pings")
 					chat_toggles ^= CHAT_BANKCARD
@@ -2999,7 +3088,23 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 	return FALSE
 
 
-/datum/preferences/proc/copy_to(mob/living/carbon/human/character, icon_updates = 1, roundstart_checks = TRUE, character_setup = FALSE, antagonist = FALSE)
+/datum/preferences/proc/copy_to(mob/living/carbon/human/character, icon_updates = 1, roundstart_checks = TRUE, character_setup = FALSE, antagonist = FALSE, skip_normal_prefs = FALSE)
+	if(skip_normal_prefs)
+		_load_statpack() /// This should load statpack preferences, I'm at my limit here.
+		character.statpack = statpack
+		// For gnolls spawning from a non-gnoll base slot, we must not apply any base-slot state.
+		// Set species to gnoll immediately so advclass check_requirements can read dna.species.type.
+		character.set_species(/datum/species/gnoll, icon_update = FALSE)
+		// Set gender to MALE as a neutral default; gnoll pronouns override the displayed pronoun.
+		character.gender = MALE
+		if(gnoll_prefs?.gnoll_pronouns)
+			character.pronouns = gnoll_prefs.gnoll_pronouns
+		var/gnoll_name = gnoll_prefs?.ensure_gnoll_name() || "Gnoll"
+		character.real_name = gnoll_name
+		character.name = gnoll_name
+		character.dna.real_name = gnoll_name
+		return
+
 	if(randomise[RANDOM_SPECIES] && !character_setup)
 		random_species()
 
@@ -3066,7 +3171,10 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 	character.nickname = nickname
 
 	character.eye_color = eye_color
-	if(extra_language && extra_language != "None")
+	var/origin_lang = FALSE
+	if(origin && origin.origin_language)
+		origin_lang = TRUE
+	if(!origin_lang && extra_language && extra_language != "None")
 		character.grant_language(extra_language)
 	if(extra_language_1 && extra_language_1 != "None")
 		character.grant_language(extra_language_1)
@@ -3116,6 +3224,8 @@ Slots: [job.spawn_positions] [job.round_contrib_points ? "RCP: +[job.round_contr
 	character.dna.real_name = character.real_name
 
 	character.headshot_link = headshot_link
+
+	character.origin = origin ? origin.name : "Unknown"
 
 	character.statpack = statpack
 

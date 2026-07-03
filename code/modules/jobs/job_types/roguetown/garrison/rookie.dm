@@ -70,8 +70,8 @@
 		/datum/skill/misc/reading = 1,
 		/datum/skill/misc/medicine = 2,
 		/datum/skill/misc/tracking = 2,
-		/datum/skill/craft/crafting, 1,
-		/datum/skill/craft/cooking, 1,
+		/datum/skill/craft/crafting = 1,
+		/datum/skill/craft/cooking = 1,
 	)
 
 /datum/outfit/job/roguetown/rookie/footman/pre_equip(mob/living/carbon/human/H)
@@ -82,12 +82,16 @@
 	pants = /obj/item/clothing/under/roguetown/chainlegs/iron
 	neck = /obj/item/clothing/neck/roguetown/chaincoif/iron
 	backr = /obj/item/storage/backpack/rogue/satchel
+	cloak = /obj/item/clothing/cloak/stabard/surcoat/guard
+	head = /obj/item/clothing/head/roguetown/helmet/kettle/
 	if(SSmapping.config.map_name == "Rockhill")
 		cloak = /obj/item/clothing/cloak/citywatch
 		head = /obj/item/clothing/head/roguetown/helmet/kettle/citywatch
-	else
-		cloak = /obj/item/clothing/cloak/stabard/surcoat/guard
-		head = /obj/item/clothing/head/roguetown/helmet/kettle/
+	if(SSmapping.config.map_name == "Desert Town")
+		cloak = /obj/item/clothing/cloak/citywatch/janissary
+		head = /obj/item/clothing/head/roguetown/helmet/janissaryhelm
+		shoes = /obj/item/clothing/shoes/roguetown/shalal
+		shirt = /obj/item/clothing/suit/roguetown/armor/gambeson/zyb
 	backpack_contents = list(
 		/obj/item/rogueweapon/huntingknife/idagger,
 		/obj/item/storage/belt/rogue/pouch,
@@ -138,8 +142,8 @@
 		/datum/skill/misc/reading = 1,
 		/datum/skill/misc/medicine = 2,
 		/datum/skill/misc/tracking = 2,
-		/datum/skill/craft/crafting, 1,
-		/datum/skill/craft/cooking, 1,
+		/datum/skill/craft/crafting = 1,
+		/datum/skill/craft/cooking = 1,
 	)
 
 /datum/outfit/job/roguetown/rookie/skirmisher/pre_equip(mob/living/carbon/human/H)
@@ -150,12 +154,16 @@
 	backr = /obj/item/storage/backpack/rogue/satchel
 	neck = /obj/item/clothing/neck/roguetown/chaincoif/iron
 	beltl = /obj/item/rogueweapon/mace/cudgel
+	cloak = /obj/item/clothing/cloak/stabard/surcoat/guard
+	head = /obj/item/clothing/head/roguetown/helmet/kettle
 	if(SSmapping.config.map_name == "Rockhill")
 		cloak = /obj/item/clothing/cloak/citywatch
 		head = /obj/item/clothing/head/roguetown/helmet/kettle/citywatch
-	else
-		cloak = /obj/item/clothing/cloak/stabard/surcoat/guard
-		head = /obj/item/clothing/head/roguetown/helmet/kettle/
+	if(SSmapping.config.map_name == "Desert Town")
+		cloak = /obj/item/clothing/cloak/citywatch/janissary
+		head = /obj/item/clothing/head/roguetown/helmet/janissaryhelm
+		shoes = /obj/item/clothing/shoes/roguetown/shalal
+		shirt = /obj/item/clothing/suit/roguetown/armor/gambeson/zyb
 	backpack_contents = list(
 		/obj/item/rogueweapon/huntingknife/idagger,
 		/obj/item/storage/belt/rogue/pouch,

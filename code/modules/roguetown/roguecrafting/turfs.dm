@@ -98,42 +98,26 @@
 	skillcraft = /datum/skill/craft/carpentry
 	verbage_simple = "construct"
 	verbage = "constructs"
-	craftdiff = 0
+	craftdiff = 2
 
 /datum/crafting_recipe/roguetown/turfs/carpet/purple
 	name = "carpet(purple)"
 	result = /turf/open/floor/carpet/purple
-	reqs = list(/obj/item/natural/silk= 2)	
-	skillcraft = /datum/skill/craft/carpentry
-	verbage_simple = "construct"
-	verbage = "constructs"
-	craftdiff = 2
+	craftdiff = 3
 
 /datum/crafting_recipe/roguetown/turfs/carpet/red
 	name = "carpet(red)"
 	result = /turf/open/floor/carpet/red
-	reqs = list(/obj/item/natural/silk= 2)	
-	skillcraft = /datum/skill/craft/carpentry
-	verbage_simple = "construct"
-	verbage = "constructs"
-	craftdiff = 2
+	craftdiff = 3
 
 /datum/crafting_recipe/roguetown/turfs/carpet/stellar
 	name = "carpet(stellar)"
 	result = /turf/open/floor/carpet/stellar
-	reqs = list(/obj/item/natural/silk= 2)	
-	skillcraft = /datum/skill/craft/carpentry
-	verbage_simple = "construct"
-	verbage = "constructs"
-	craftdiff = 2
+	craftdiff = 3
 
 /datum/crafting_recipe/roguetown/turfs/carpet/royalblack
 	name = "carpet(royal black)"
 	result = /turf/open/floor/carpet/royalblack
-	reqs = list(/obj/item/natural/silk= 2)	
-	skillcraft = /datum/skill/craft/carpentry
-	verbage_simple = "construct"
-	verbage = "constructs"
 	craftdiff = 3
 
 /// STONE
@@ -485,19 +469,20 @@
 
 // Normal, non-openable window
 /datum/crafting_recipe/roguetown/turfs/roguewindow
-	name = "static glass window (2 small logs, 1 glass)"
+	name = "static glass window (2 small logs)"
 	result = /obj/structure/roguewindow
-	reqs = list(/obj/item/grown/log/tree/small = 2, /obj/item/natural/glass = 1)
+	reqs = list(/obj/item/grown/log/tree/small = 2)
 	skillcraft = /datum/skill/craft/carpentry
 	verbage_simple = "build"
 	verbage = "builds"
-	craftdiff = 3
+	craftdiff = 4
 
 	/*
 	By the way, glass windows needing Masonry and Carpentry instead of Ceramics isn't an oversight.
 	The Mason and the Carpenter are the ones who will build the window itself from wood and
 	an already prepared pane of glass. The potter has nothing to do with this part of the process.
 	*/// - SunriseOYH
+	// Glass requirement removed from the wooden windows due to the sheer annoyance of actually getting glass - annikaRU
 
 /datum/crafting_recipe/roguetown/turfs/roguewindow/TurfCheck(mob/user, turf/T)
 	if(isclosedturf(T))
@@ -508,10 +493,10 @@
 
 // The windows you can open and close
 /datum/crafting_recipe/roguetown/turfs/roguewindow/dynamic
-	name = "openable glass window (2 small logs, 1 glass)"
+	name = "openable glass window (2 small logs)"
 	result = /obj/structure/roguewindow/openclose
-	reqs = list(/obj/item/grown/log/tree/small = 2, /obj/item/natural/glass = 1)
-	craftdiff = 3
+	reqs = list(/obj/item/grown/log/tree/small = 2)
+	craftdiff = 4
 
 // The 'windows' of the church that almost no one knows exists.
 /datum/crafting_recipe/roguetown/turfs/roguewindow/stone
@@ -547,3 +532,49 @@
 	verbage_simple = "construct"
 	verbage = "constructs"
 	craftdiff = 3
+// Druidic Grass Turfs
+
+/datum/crafting_recipe/roguetown/turfs/druidic_grass
+	abstract_type = /datum/crafting_recipe/roguetown/turfs/druidic_grass
+	req_table = FALSE
+	always_availible = TRUE
+	skillcraft = /datum/skill/magic/druidic
+	craftdiff = SKILL_LEVEL_MASTER
+	reqs = list(
+		/obj/item/fertilizer = 1,
+		/obj/item/natural/fibers = 3,
+	)
+	tools = list(/obj/item/alch/bloomstone = 1)
+	verbage_simple = "grow"
+	verbage = "grows"
+
+/datum/crafting_recipe/roguetown/turfs/druidic_grass/TurfCheck(mob/user, turf/T)
+	if(isclosedturf(T))
+		return
+	if(!istype(T, /turf/open/floor/rogue))
+		return
+	return TRUE
+
+/datum/crafting_recipe/roguetown/turfs/druidic_grass/grass
+	name = "grass"
+	result = /turf/open/floor/rogue/grass
+
+/datum/crafting_recipe/roguetown/turfs/druidic_grass/grassred
+	name = "red grass"
+	result = /turf/open/floor/rogue/grassred
+
+/datum/crafting_recipe/roguetown/turfs/druidic_grass/grassyel
+	name = "yellow grass"
+	result = /turf/open/floor/rogue/grassyel
+
+/datum/crafting_recipe/roguetown/turfs/druidic_grass/grasscold
+	name = "cold grass"
+	result = /turf/open/floor/rogue/grasscold
+
+/datum/crafting_recipe/roguetown/turfs/druidic_grass/desert_grass
+	name = "desert grass"
+	result = /turf/open/floor/rogue/desert_grass
+
+/datum/crafting_recipe/roguetown/turfs/druidic_grass/grasspurple
+	name = "purple grass"
+	result = /turf/open/floor/rogue/grasspurple
