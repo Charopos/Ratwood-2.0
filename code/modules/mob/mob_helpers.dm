@@ -651,6 +651,7 @@
 		cmode = FALSE
 		SSdroning.kill_droning(client)
 		SSdroning.play_area_sound(get_area(src), client)
+		clear_fullscreen("CMODE")
 		if(client && HAS_TRAIT(src, TRAIT_SCREENSHAKE))
 			animate(client, pixel_y)
 	else
@@ -660,6 +661,7 @@
 			SSdroning.play_combat_music(L.cmode_music_override, client)
 		else if(L.cmode_music)
 			SSdroning.play_combat_music(L.cmode_music, client)
+		overlay_fullscreen("CMODE", /atom/movable/screen/fullscreen/crit/cmode)
 		if(client && HAS_TRAIT(src, TRAIT_PSYCHOSIS))
 			animate(client, pixel_y = 1, time = 1, loop = -1, flags = ANIMATION_RELATIVE)
 			animate(pixel_y = -1, time = 1, flags = ANIMATION_RELATIVE)
@@ -732,9 +734,11 @@
 
 	if(zone_selected != old_zone)
 		playsound_local(src, 'sound/misc/click.ogg', 50, TRUE)
-		if(hud_used)
-			if(hud_used.zone_select)
-				hud_used.zone_select.update_icon()
+		if(isliving(src))
+			var/mob/living/L = src
+			L.update_zone_selector_hud()
+		else if(hud_used?.zone_select)
+			hud_used.zone_select.update_zone_layers()
 
 /mob/proc/select_organ_slot(choice)
 	organ_slot_selected = choice
